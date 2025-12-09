@@ -1,0 +1,38 @@
+# --- Dependencies ---
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+# ^ Keep package-lock.json if you want to lock versions, 
+# but remove it from here if you do. Usually, you commit the lock file.
+
+# --- Environment Variables (SECURITY RISK) ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs
+*.log
+npm-debug.log
+
+# --- Runtime / OS ---
+.DS_Store
+Thumbs.db
+dist/
+build/
+coverage/
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+
+# --- Specific to your stack ---
+# If you have file uploads that go to a local folder:
+uploads/
+images/
