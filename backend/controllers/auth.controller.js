@@ -52,9 +52,85 @@ export const signup = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  res.send("login route");
+  const { email, password } = req.body;
+
+  try {
+    if (!email || !password) {
+      throw new Error("All fields are required");
+    }
+
+    //check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    //check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    // Optional: Block login if not verified
+    // if (!user.isVerified) {
+    //   return res.status(400).json({ success: false, message: "Please verify your email first" });
+    // }
+
+    //update login time
+    user.lastlogin = new Date();
+    await user.save();
+
+    // generate token & cookie
+    generateTokenAndSetCookie(res, user._id);
+
+    // clean up user object for response (remove password)
+    const userResponse = user.toObject();
+    delete userResponse.password;
+
+    res.status(200).json({
+      success: true,
+      message: "Logged in successfully",
+      user: userResponse,
+    });
+  } catch (error) {
+    onsole.log("Error in login controller", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 export const logout = async (req, res) => {
-  res.send("logout route");
+  try {
+    // clear cookie
+    res.clearCookie("token", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    res.status(200).json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    console.log("Error in logout controller", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+export const checkAuth = async (req, res) => {
+  try {
+    // req.userId comes from the middleware above!
+    const user = await User.findById(req.userId).select("-password"); // Don't send password
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.log("Error in checkAuth ", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
