@@ -1,8 +1,11 @@
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import { generateVerificationToken } from "../utils/generateVerificationToken.js";
+import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
+import { sendVerificationEmail } from "../utils/emails.js";
 
 export const signup = async (req, res) => {
+  //console.log("HIT: The Signup Controller has started!");
   const { email, password, name } = req.body;
 
   try {
@@ -30,9 +33,21 @@ export const signup = async (req, res) => {
     await user.save();
 
     // jwt
+    generateTokenAndSetCookie(res, user._id);
 
+    // send email to verify
+    sendVerificationEmail(user.email, verificationToken);
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      user: {
+        ...user._doc,
+        password: undefined,
+      },
+    });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
